@@ -8,93 +8,65 @@ using ThreadSyncTask.Entities;
 
 namespace ThreadSyncTask.SyncClasses
 {
-    class LockSync
+    class LockSync : Sync
     {
-        private readonly int _readCount;
-
-        private readonly List<Item> _items = new List<Item>();
-        private int _id = 1;
-        private int _count = 30;
-
         private readonly object locker = new object();
 
-        public LockSync(int readCount)
+        public LockSync(int readCount) : base(readCount)
         {
-            _readCount = readCount;
+            
         }
 
-        public void StartSync()
-        {
-            var writeThreads = new List<Thread>();
-            var readThreads = new List<Thread>();
-
-            for (var i = 0; i < 2; i++)
-            {
-                var thread = new Thread(WriteItems)
-                {
-                    Name = $"Thread {i}"
-                };
-                writeThreads.Add(thread);
-                thread.Start();
-            }
-
-            for (var i = 2; i < _readCount + 2; i++)
-            {
-                var thread = new Thread(ReadItems)
-                {
-                    Name = $"Thread {i}"
-                };
-                readThreads.Add(thread);
-                thread.Start();
-            }
-
-            foreach (var thread in writeThreads)
-            {
-                thread.Join();
-                Console.WriteLine($"{thread.Name} joined");
-            }
-
-            foreach (var thread in readThreads)
-            {
-                thread.Join();
-                Console.WriteLine($"{thread.Name} joined");
-            }
-            Console.WriteLine("Done");
-        }
-
-        private void WriteItems()
+        protected override void WriteItems()
         {
             while (true)
             {
                 lock (locker)
                 {
-                    if (_count == 0) break;
+                    if (_count == 0)
+                         break;
                     var item = new Item { Id = _id, Name = $"I {_id} {Thread.CurrentThread.Name}" };
                     _items.Add(item);
-                    
+                    Console.WriteLine(_id);
                     _id++;
                     _count--;
+                     Monitor.PulseAll(locker);
                 }
 
-                Thread.Sleep(10);
+                Thread.Sleep(5);
             }
         }
 
-        private void ReadItems()
+        protected override void ReadItems()
         {
             while (true)
             {
                 lock (locker)
                 {
-                    if (_items.Count == 0) break;
-                    var item = _items.First();
+                     if (_id >= 50 && _items.Count == 0)
+                          break;
 
-                    Console.WriteLine("{0}: {1}", Thread.CurrentThread.Name, item);
+                     while (true)
+                     {
+                          if (_items.Count != 0)
+                          {
+                               var item = _items.First();
 
-                    _items.RemoveAt(0);
+                               Console.WriteLine("{0}: {1}", Thread.CurrentThread.Name, item);
+
+                               _items.RemoveAt(0);
+
+                               Monitor.PulseAll(locker);
+
+                               break;
+                          }
+
+                          Monitor.Wait(locker);
+                     }
+                    
                 }
 
-                Thread.Sleep(10);
+                Thread.Sleep(5);
             }
         }
     }

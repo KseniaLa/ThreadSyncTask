@@ -8,61 +8,17 @@ using ThreadSyncTask.Entities;
 
 namespace ThreadSyncTask.SyncClasses
 {
-    class MutexSync
+    class MutexSync : Sync
     {
-        private readonly int _readCount;
-
-        private readonly List<Item> _items = new List<Item>();
-        private int _id = 1;
-        private int _count = 30;
 
         private readonly Mutex mutex = new Mutex();
 
-        public MutexSync(int readCount)
+        public MutexSync(int readCount) : base(readCount)
         {
-            _readCount = readCount;
+
         }
 
-        public void StartSync()
-        {
-            var writeThreads = new List<Thread>();
-            var readThreads = new List<Thread>();
-
-            for (var i = 0; i < 2; i++)
-            {
-                var thread = new Thread(WriteItems)
-                {
-                    Name = $"Thread {i}"
-                };
-                writeThreads.Add(thread);
-                thread.Start();
-            }
-
-            for (var i = 2; i < _readCount + 2; i++)
-            {
-                var thread = new Thread(ReadItems)
-                {
-                    Name = $"Thread {i}"
-                };
-                readThreads.Add(thread);
-                thread.Start();
-            }
-
-            foreach (var thread in writeThreads)
-            {
-                thread.Join();
-                Console.WriteLine($"{thread.Name} joined");
-            }
-
-            foreach (var thread in readThreads)
-            {
-                thread.Join();
-                Console.WriteLine($"{thread.Name} joined");
-            }
-            Console.WriteLine("Done");
-        }
-
-        private void WriteItems()
+        protected override void WriteItems()
         {
             while (true)
             {
@@ -86,11 +42,11 @@ namespace ThreadSyncTask.SyncClasses
                     mutex.ReleaseMutex();
                 }
                 
-                Thread.Sleep(10);
+                Thread.Sleep(5);
             }
         }
 
-        private void ReadItems()
+        protected override void ReadItems()
         {
             while (true)
             {
@@ -114,8 +70,10 @@ namespace ThreadSyncTask.SyncClasses
                     mutex.ReleaseMutex();
                 }
                 
-                Thread.Sleep(10);
+                Thread.Sleep(5);
             }
+
+             var i = 5;
         }
     }
 }
