@@ -33,8 +33,8 @@ namespace ThreadSyncTask.SyncClasses
 
                     var item = new Item { Id = _id, Name = $"I {_id} {Thread.CurrentThread.Name}" };
                     _items.Add(item);
-
-                    _id++;
+                     Console.WriteLine(_id);
+                     _id++;
                     _count--;
                 }
                 finally
@@ -72,8 +72,6 @@ namespace ThreadSyncTask.SyncClasses
                 
                 Thread.Sleep(5);
             }
-
-             var i = 5;
         }
     }
 }
