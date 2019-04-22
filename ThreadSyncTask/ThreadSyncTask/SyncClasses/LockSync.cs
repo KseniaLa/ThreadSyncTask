@@ -14,7 +14,7 @@ namespace ThreadSyncTask.SyncClasses
 
         public LockSync(int readCount) : base(readCount)
         {
-            
+
         }
 
         protected override void WriteItems()
@@ -28,13 +28,13 @@ namespace ThreadSyncTask.SyncClasses
                         Monitor.PulseAll(locker);
                         break;
                     }
-                         
+
                     var item = new Item { Id = _id, Name = $"I {_id} {Thread.CurrentThread.Name}" };
                     _items.Add(item);
                     Console.WriteLine(_id);
                     _id++;
                     _count--;
-                     Monitor.PulseAll(locker);
+                    Monitor.PulseAll(locker);
                 }
 
                 Thread.Sleep(5);
@@ -51,30 +51,29 @@ namespace ThreadSyncTask.SyncClasses
                     {
                         break;
                     }
-                          
 
-                     while (true)
-                     {
-                          if (_items.Count != 0)
-                          {
-                               var item = _items.First();
+                    while (true)
+                    {
+                        if (_items.Count != 0)
+                        {
+                            var item = _items.First();
 
-                               Console.WriteLine("{0}: {1}", Thread.CurrentThread.Name, item);
+                            Console.WriteLine("{0}: {1}", Thread.CurrentThread.Name, item);
 
-                               _items.RemoveAt(0);
+                            _items.RemoveAt(0);
 
-                               Monitor.PulseAll(locker);
+                            Monitor.PulseAll(locker);
 
-                               break;
-                          }
+                            break;
+                        }
 
-                         if (_id >= _totalCount + 1 && _items.Count == 0)
-                         {
-                             break;
-                         }
+                        if (_id >= _totalCount + 1 && _items.Count == 0)
+                        {
+                            break;
+                        }
 
-                          Monitor.Wait(locker);
-                     }
+                        Monitor.Wait(locker);
+                    }
                 }
 
                 Thread.Sleep(5);

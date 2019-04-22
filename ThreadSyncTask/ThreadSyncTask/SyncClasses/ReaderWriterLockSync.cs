@@ -8,68 +8,89 @@ using ThreadSyncTask.Entities;
 
 namespace ThreadSyncTask.SyncClasses
 {
-     class ReaderWriterLockSync : Sync
-     {
-          private ReaderWriterLock _rwlock = new ReaderWriterLock();
+    class ReaderWriterLockSync : Sync
+    {
+        private ReaderWriterLock _rwlock = new ReaderWriterLock();
+        private int _index = 0;
 
-          public ReaderWriterLockSync(int readCount) : base(readCount)
-          {
-          }
+        public ReaderWriterLockSync(int readCount) : base(readCount)
+        {
+        }
 
-          protected override void WriteItems()
-          {
-               while (true)
-               {
+        protected override void WriteItems()
+        {
+            while (true)
+            {
+                try
+                {
                     try
                     {
-                         _rwlock.AcquireWriterLock(100);
+                        _rwlock.AcquireWriterLock(100);
 
-                         if (_count == 0)
-                         {
-                              break;
-                         }
+                        if (_count == 0)
+                        {
+                            break;
+                        }
 
-                         var item = new Item { Id = _id, Name = $"I {_id} {Thread.CurrentThread.Name}" };
-                         _items.Add(item);
-                         Console.WriteLine(_id);
-                         _id++;
-                         _count--;
+                        var item = new Item { Id = _id, Name = $"I {_id} {Thread.CurrentThread.Name}" };
+                        _items.Add(item);
+                        Console.WriteLine(_id);
+                        _id++;
+                        _count--;
                     }
                     finally
                     {
-                         _rwlock.ReleaseWriterLock();
+                        _rwlock.ReleaseWriterLock();
                     }
 
                     Thread.Sleep(5);
-               }
-          }
+                }
+                catch (ApplicationException)
+                {
+                    Console.WriteLine($"{Thread.CurrentThread.Name} - Timeout");
+                }
+            }
+        }
 
-          protected override void ReadItems()
-          {
-               while (true)
-               {
+        protected override void ReadItems()
+        {
+            while (true)
+            {
+                try
+                {
                     try
                     {
-                         _rwlock.AcquireWriterLock(100);
+                        _rwlock.AcquireWriterLock(100);
 
-                         if (_items.Count == 0)
-                         {
-                              break;
-                         }
+                        if (_id >= _totalCount + 1 && _items.Count == 0)
+                        {
+                            break;
+                        }
 
-                         var item = _items.First();
+                        if (_items.Count != 0)
+                        {
+                            var item = _items.First();
 
-                         Console.WriteLine("{0}: {1}", Thread.CurrentThread.Name, item);
+                            Console.WriteLine("{0}: {1}", Thread.CurrentThread.Name, item);
 
-                         _items.RemoveAt(0);
+                            //Interlocked.Increment(ref _index);
+                            _items.RemoveAt(0);
+                        }
                     }
                     finally
                     {
-                         _rwlock.ReleaseWriterLock();
+                        _rwlock.ReleaseReaderLock();
                     }
 
                     Thread.Sleep(5);
-               }
-          }
-     }
+                }
+                catch (ApplicationException)
+                {
+                    Console.WriteLine($"{Thread.CurrentThread.Name} - Timeout");
+                }
+            }
+
+            Console.WriteLine($"{Thread.CurrentThread.Name} finished");
+        }
+    }
 }

@@ -8,68 +8,73 @@ using ThreadSyncTask.Entities;
 
 namespace ThreadSyncTask.SyncClasses
 {
-     class AutoResetEventSync : Sync
-     {
-          private readonly AutoResetEvent waitHandler = new AutoResetEvent(true);
+    class AutoResetEventSync : Sync
+    {
+        private readonly AutoResetEvent _waitHandler = new AutoResetEvent(true);
 
-          public AutoResetEventSync(int readCount) : base(readCount)
-          {
-          }
+        public AutoResetEventSync(int readCount) : base(readCount)
+        {
+        }
 
-          protected override void WriteItems()
-          {
-               while (true)
-               {
-                    try
+        protected override void WriteItems()
+        {
+            while (true)
+            {
+                try
+                {
+                    _waitHandler.WaitOne();
+
+                    if (_count == 0)
                     {
-                         waitHandler.WaitOne();
-
-                         if (_count == 0)
-                         {
-                              break;
-                         }
-
-                         var item = new Item { Id = _id, Name = $"I {_id} {Thread.CurrentThread.Name}" };
-                         _items.Add(item);
-                         Console.WriteLine(_id);
-                         _id++;
-                         _count--;
-                    }
-                    finally
-                    {
-                         waitHandler.Set();
+                        break;
                     }
 
-                    Thread.Sleep(5);
-               }
-          }
+                    var item = new Item { Id = _id, Name = $"I {_id} {Thread.CurrentThread.Name}" };
+                    _items.Add(item);
+                    Console.WriteLine(_id);
+                    _id++;
+                    _count--;
+                }
+                finally
+                {
+                    _waitHandler.Set();
+                }
 
-          protected override void ReadItems()
-          {
-               while (true)
-               {
-                    try
+                Thread.Sleep(5);
+            }
+        }
+
+        protected override void ReadItems()
+        {
+            while (true)
+            {
+                try
+                {
+                    _waitHandler.WaitOne();
+
+                    if (_id >= _totalCount + 1 && _items.Count == 0)
                     {
-                         waitHandler.WaitOne();
-
-                         if (_items.Count == 0)
-                         {
-                              break;
-                         }
-
-                         var item = _items.First();
-
-                         Console.WriteLine("{0}: {1}", Thread.CurrentThread.Name, item);
-
-                         _items.RemoveAt(0);
+                        break;
                     }
-                    finally
+
+                    if (_items.Count != 0)
                     {
-                         waitHandler.Set();
-                    }
+                        var item = _items.First();
 
-                    Thread.Sleep(5);
-               }
-          }
-     }
+                        Console.WriteLine("{0}: {1}", Thread.CurrentThread.Name, item);
+
+                        _items.RemoveAt(0);
+                    }
+                }
+                finally
+                {
+                    _waitHandler.Set();
+                }
+
+                Thread.Sleep(5);
+            }
+
+            Console.WriteLine($"{Thread.CurrentThread.Name} finished");
+        }
+    }
 }

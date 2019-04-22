@@ -8,68 +8,74 @@ using ThreadSyncTask.Entities;
 
 namespace ThreadSyncTask.SyncClasses
 {
-     class ReaderWriterLockSlimSync : Sync
-     {
-          private ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+    class ReaderWriterLockSlimSync : Sync
+    {
+        private ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
 
-          public ReaderWriterLockSlimSync(int readCount) : base(readCount)
-          {
-          }
+        public ReaderWriterLockSlimSync(int readCount) : base(readCount)
+        {
+        }
 
-          protected override void WriteItems()
-          {
-               while (true)
-               {
-                    try
+        protected override void WriteItems()
+        {
+            while (true)
+            {
+                try
+                {
+                    _lock.EnterWriteLock();
+
+                    if (_count == 0)
                     {
-                         _lock.EnterWriteLock();
-
-                         if (_count == 0)
-                         {
-                              break;
-                         }
-
-                         var item = new Item { Id = _id, Name = $"I {_id} {Thread.CurrentThread.Name}" };
-                         _items.Add(item);
-                         Console.WriteLine(_id);
-                         _id++;
-                         _count--;
-                    }
-                    finally
-                    {
-                         _lock.ExitWriteLock();
+                        break;
                     }
 
-                    Thread.Sleep(5);
-               }
-          }
+                    var item = new Item { Id = _id, Name = $"I {_id} {Thread.CurrentThread.Name}" };
+                    _items.Add(item);
+                    Console.WriteLine(_id);
+                    _id++;
+                    _count--;
+                }
+                finally
+                {
+                    _lock.ExitWriteLock();
+                }
 
-          protected override void ReadItems()
-          {
-               while (true)
-               {
-                    try
+                Thread.Sleep(5);
+            }
+        }
+
+        protected override void ReadItems()
+        {
+            while (true)
+            {
+                try
+                {
+                    _lock.EnterWriteLock();
+
+                    if (_id >= _totalCount + 1 && _items.Count == 0)
                     {
-                         _lock.EnterWriteLock();
-
-                         if (_items.Count == 0)
-                         {
-                              break;
-                         }
-
-                         var item = _items.First();
-
-                         Console.WriteLine("{0}: {1}", Thread.CurrentThread.Name, item);
-
-                         _items.RemoveAt(0);
+                        break;
                     }
-                    finally
+
+                    if (_items.Count != 0)
                     {
-                         _lock.ExitWriteLock();
+                        var item = _items.First();
+
+                        Console.WriteLine("{0}: {1}", Thread.CurrentThread.Name, item);
+
+                        _items.RemoveAt(0);
                     }
 
-                    Thread.Sleep(5);
-               }
-          }
-     }
+                }
+                finally
+                {
+                    _lock.ExitWriteLock();
+                }
+
+                Thread.Sleep(5);
+            }
+
+            Console.WriteLine($"{Thread.CurrentThread.Name} finished");
+        }
+    }
 }

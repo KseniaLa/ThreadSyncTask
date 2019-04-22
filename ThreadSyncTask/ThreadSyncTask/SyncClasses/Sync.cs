@@ -23,7 +23,7 @@ namespace ThreadSyncTask.SyncClasses
               _count = _totalCount;
           }
 
-          public void StartSync()
+          public virtual void StartSync()
           {
                var writeThreads = new List<Thread>();
                var readThreads = new List<Thread>();
