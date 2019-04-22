@@ -54,16 +54,19 @@ namespace ThreadSyncTask.SyncClasses
                 {
                     mutex.WaitOne();
 
-                    if (_items.Count == 0)
+                    if (_id >= _totalCount + 1 && _items.Count == 0)
                     {
                         break;
                     }
 
-                    var item = _items.First();
+                    if (_items.Count != 0)
+                    {
+                        var item = _items.First();
 
-                    Console.WriteLine("{0}: {1}", Thread.CurrentThread.Name, item);
+                        Console.WriteLine("{0}: {1}", Thread.CurrentThread.Name, item);
 
-                    _items.RemoveAt(0);
+                        _items.RemoveAt(0);
+                    }
                 }
                 finally
                 {
@@ -72,6 +75,8 @@ namespace ThreadSyncTask.SyncClasses
                 
                 Thread.Sleep(5);
             }
+
+            Console.WriteLine($"{Thread.CurrentThread.Name} finished");
         }
     }
 }

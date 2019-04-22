@@ -74,8 +74,7 @@ namespace ThreadSyncTask.SyncClasses
                          }
 
                           Monitor.Wait(locker);
-                    }
-                    
+                     }
                 }
 
                 Thread.Sleep(5);
