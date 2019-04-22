@@ -11,7 +11,7 @@ namespace ThreadSyncTask
     {
         static void Main(string[] args)
         {
-            var lockSync = new ReaderWriterLockSlimSync(3);
+            var lockSync = new LockSync(3);
             lockSync.StartSync();
 
             Console.ReadLine();

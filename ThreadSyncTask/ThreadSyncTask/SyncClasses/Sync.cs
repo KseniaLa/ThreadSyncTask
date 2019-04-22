@@ -14,11 +14,13 @@ namespace ThreadSyncTask.SyncClasses
 
           protected readonly List<Item> _items = new List<Item>();
           protected int _id = 1;
+          protected const int _totalCount = 50;
           protected int _count = 50;
 
           protected Sync(int readCount)
           {
                _readCount = readCount;
+              _count = _totalCount;
           }
 
           public void StartSync()

@@ -24,7 +24,11 @@ namespace ThreadSyncTask.SyncClasses
                 lock (locker)
                 {
                     if (_count == 0)
-                         break;
+                    {
+                        Monitor.PulseAll(locker);
+                        break;
+                    }
+                         
                     var item = new Item { Id = _id, Name = $"I {_id} {Thread.CurrentThread.Name}" };
                     _items.Add(item);
                     Console.WriteLine(_id);
@@ -43,8 +47,11 @@ namespace ThreadSyncTask.SyncClasses
             {
                 lock (locker)
                 {
-                     if (_id >= 50 && _items.Count == 0)
-                          break;
+                    if (_id >= _totalCount + 1 && _items.Count == 0)
+                    {
+                        break;
+                    }
+                          
 
                      while (true)
                      {
@@ -61,13 +68,20 @@ namespace ThreadSyncTask.SyncClasses
                                break;
                           }
 
+                         if (_id >= _totalCount + 1 && _items.Count == 0)
+                         {
+                             break;
+                         }
+
                           Monitor.Wait(locker);
-                     }
+                    }
                     
                 }
 
                 Thread.Sleep(5);
             }
+
+            Console.WriteLine($"{Thread.CurrentThread.Name} finished");
         }
     }
 }
