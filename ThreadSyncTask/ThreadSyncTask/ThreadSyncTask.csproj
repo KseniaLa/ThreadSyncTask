@@ -47,10 +47,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SyncClasses\AutoResetEventSync.cs" />
     <Compile Include="SyncClasses\LockSync.cs" />
-    <Compile Include="SyncClasses\ManualResetEventSync.cs" />
     <Compile Include="SyncClasses\MutexSync.cs" />
     <Compile Include="SyncClasses\ReaderWriterLockSlimSync.cs" />
-    <Compile Include="SyncClasses\ReaderWriterLockSync.cs" />
     <Compile Include="SyncClasses\Sync.cs" />
   </ItemGroup>
   <ItemGroup>

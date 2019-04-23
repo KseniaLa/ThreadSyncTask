@@ -11,8 +11,8 @@ namespace ThreadSyncTask
     {
         static void Main(string[] args)
         {
-            var lockSync = new MutexSync(3);
-            lockSync.StartSync();
+            var syncMethod = new MutexSync(3);
+            syncMethod.StartSync();
 
             Console.ReadLine();
         }

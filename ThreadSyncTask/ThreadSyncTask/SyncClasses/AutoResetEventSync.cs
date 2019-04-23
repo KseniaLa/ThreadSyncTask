@@ -29,9 +29,11 @@ namespace ThreadSyncTask.SyncClasses
                         break;
                     }
 
-                    var item = new Item { Id = _id, Name = $"I {_id} {Thread.CurrentThread.Name}" };
+                    var item = new Item { Id = _id, Name = $"Added by {Thread.CurrentThread.Name}" };
                     _items.Add(item);
+
                     Console.WriteLine(_id);
+
                     _id++;
                     _count--;
                 }
@@ -46,6 +48,8 @@ namespace ThreadSyncTask.SyncClasses
 
         protected override void ReadItems()
         {
+            Item item = null;
+
             while (true)
             {
                 try
@@ -59,9 +63,7 @@ namespace ThreadSyncTask.SyncClasses
 
                     if (_items.Count != 0)
                     {
-                        var item = _items.First();
-
-                        Console.WriteLine("{0}: {1}", Thread.CurrentThread.Name, item);
+                        item = _items.First();
 
                         _items.RemoveAt(0);
                     }
@@ -69,6 +71,12 @@ namespace ThreadSyncTask.SyncClasses
                 finally
                 {
                     _waitHandler.Set();
+                }
+
+                if (item != null)
+                {
+                    Console.WriteLine("{0}: {1}", Thread.CurrentThread.Name, item);
+                    item = null;
                 }
 
                 Thread.Sleep(5);

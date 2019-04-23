@@ -11,7 +11,7 @@ namespace ThreadSyncTask.SyncClasses
     class MutexSync : Sync
     {
 
-        private readonly Mutex mutex = new Mutex();
+        private readonly Mutex _mutex = new Mutex();
 
         public MutexSync(int readCount) : base(readCount)
         {
@@ -24,36 +24,41 @@ namespace ThreadSyncTask.SyncClasses
             {
                 try
                 {
-                    mutex.WaitOne();
+                    _mutex.WaitOne();
 
                     if (_count == 0)
                     {
                         break;
                     }
 
-                    var item = new Item { Id = _id, Name = $"I {_id} {Thread.CurrentThread.Name}" };
+                    var item = new Item { Id = _id, Name = $"Added by {Thread.CurrentThread.Name}" };
                     _items.Add(item);
-                     Console.WriteLine(_id);
-                     _id++;
+
+                    Console.WriteLine(_id);
+
+                    _id++;
                     _count--;
                 }
                 finally
                 {
-                    mutex.ReleaseMutex();
+                    _mutex.ReleaseMutex();
                 }
-                
+
                 Thread.Sleep(5);
             }
         }
 
         protected override void ReadItems()
         {
+            Item item = null;
+
             while (true)
             {
                 try
                 {
-                    mutex.WaitOne();
+                    _mutex.WaitOne();
 
+                    // item list is empty and writing threads don't add new items
                     if (_id >= _totalCount + 1 && _items.Count == 0)
                     {
                         break;
@@ -61,16 +66,20 @@ namespace ThreadSyncTask.SyncClasses
 
                     if (_items.Count != 0)
                     {
-                        var item = _items.First();
-
-                        Console.WriteLine("{0}: {1}", Thread.CurrentThread.Name, item);
+                        item = _items.First();
 
                         _items.RemoveAt(0);
                     }
                 }
                 finally
                 {
-                    mutex.ReleaseMutex();
+                    _mutex.ReleaseMutex();
+                }
+
+                if (item != null)
+                {
+                    Console.WriteLine("{0}: {1}", Thread.CurrentThread.Name, item);
+                    item = null;
                 }
                 
                 Thread.Sleep(5);
