@@ -8,84 +8,86 @@ using ThreadSyncTask.Entities;
 
 namespace ThreadSyncTask.SyncClasses
 {
-    class MutexSync : Sync
-    {
+     class MutexSync : Sync
+     {
 
-        private readonly Mutex _mutex = new Mutex();
+          private readonly Mutex _mutex = new Mutex();
 
-        public MutexSync(int readCount) : base(readCount)
-        {
+          private int _readIndex = 0;
 
-        }
+          public MutexSync(int readCount) : base(readCount)
+          {
 
-        protected override void WriteItems()
-        {
-            while (true)
-            {
-                try
-                {
-                    _mutex.WaitOne();
+          }
 
-                    if (_count == 0)
+          protected override void WriteItems()
+          {
+               while (true)
+               {
+                    try
                     {
-                        break;
+                         _mutex.WaitOne();
+
+                         if (_count == 0)
+                         {
+                              break;
+                         }
+
+                         var item = new Item { Id = _id, Name = $"Added by {Thread.CurrentThread.Name}" };
+                         _items.Add(item);
+
+                         Console.WriteLine(_id);
+
+                         _id++;
+                         _count--;
+                    }
+                    finally
+                    {
+                         _mutex.ReleaseMutex();
                     }
 
-                    var item = new Item { Id = _id, Name = $"Added by {Thread.CurrentThread.Name}" };
-                    _items.Add(item);
+                    Thread.Sleep(5);
+               }
+          }
 
-                    Console.WriteLine(_id);
+          protected override void ReadItems()
+          {
+               Item item = null;
 
-                    _id++;
-                    _count--;
-                }
-                finally
-                {
-                    _mutex.ReleaseMutex();
-                }
-
-                Thread.Sleep(5);
-            }
-        }
-
-        protected override void ReadItems()
-        {
-            Item item = null;
-
-            while (true)
-            {
-                try
-                {
-                    _mutex.WaitOne();
-
-                    // item list is empty and writing threads don't add new items
-                    if (_id >= _totalCount + 1 && _items.Count == 0)
+               while (true)
+               {
+                    try
                     {
-                        break;
+                         _mutex.WaitOne();
+
+                         // item list is empty and writing threads don't add new items
+                         if (_id >= _totalCount + 1 && _readIndex == _totalCount)
+                         {
+                              break;
+                         }
+
+                         if (_items.Count - 1 >= _readIndex)
+                         {
+                              item = _items[_readIndex];
+
+                              _readIndex++;
+                         }
+                    }
+                    finally
+                    {
+                         _mutex.ReleaseMutex();
                     }
 
-                    if (_items.Count != 0)
+                    if (item != null)
                     {
-                        item = _items.First();
-
-                        _items.RemoveAt(0);
+                         Console.WriteLine("{0}: {1}", Thread.CurrentThread.Name, item);
+                         item = null;
                     }
-                }
-                finally
-                {
-                    _mutex.ReleaseMutex();
-                }
 
-                if (item != null)
-                {
-                    Console.WriteLine("{0}: {1}", Thread.CurrentThread.Name, item);
-                    item = null;
-                }
-                
-                Thread.Sleep(5);
-            }
+                    Thread.Sleep(5);
+               }
 
-            Console.WriteLine($"{Thread.CurrentThread.Name} finished");
-        }
-    }
+               Console.WriteLine($"{Thread.CurrentThread.Name} finished");
+          }
+     }
 }
